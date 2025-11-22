@@ -30,20 +30,6 @@ const INITIAL_VOCAB: Word[] = [
       { en: "The local economy is remarkably resilient.", cn: "当地经济具有惊人的恢复力。" }
     ],
     note: ""
-  },
-  {
-    id: 2,
-    word: "Ambiguous",
-    phonetic: "/æmˈbɪɡjuəs/",
-    category: "Academic",
-    status: 'learning',
-    definitions: [
-      { pos: "adj.", en: "Open to more than one interpretation.", cn: "模棱两可的；含糊不清的" }
-    ],
-    examples: [
-      { en: "The instructions were too ambiguous to follow.", cn: "指示太含糊，无法照办。" }
-    ],
-    note: ""
   }
 ];
 
@@ -104,7 +90,7 @@ export default function App() {
       }
     } else {
       if (!gistId) {
-        setSyncStatus('Error: Need Gist ID to download.');
+        setSyncStatus('Error: Enter Gist ID to download.');
         setIsSyncing(false);
         return;
       }
@@ -372,12 +358,19 @@ export default function App() {
                 <p className="text-[10px] text-slate-400 mt-1">Create a token with 'gist' scope in GitHub Developer Settings.</p>
               </div>
               
-              {gistId && (
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Connected Gist ID</label>
-                  <div className="text-xs font-mono bg-slate-100 p-2 rounded text-slate-500 break-all">{gistId}</div>
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Connected Gist ID</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    className="w-full p-3 bg-slate-50 rounded-xl border-transparent focus:border-indigo-500 focus:bg-white text-sm font-mono text-slate-600"
+                    placeholder="Paste Gist ID here to sync existing data..."
+                    value={gistId}
+                    onChange={(e) => setGistId(e.target.value)}
+                  />
                 </div>
-              )}
+                <p className="text-[10px] text-slate-400 mt-1">On a new device? Paste the ID from your main device here.</p>
+              </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <button 
@@ -386,7 +379,7 @@ export default function App() {
                   className="flex items-center justify-center gap-2 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all"
                 >
                   {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  Save to Cloud
+                  Save
                 </button>
                 <button 
                   onClick={() => handleSync('download')}
@@ -394,7 +387,7 @@ export default function App() {
                   className="flex items-center justify-center gap-2 py-3 bg-white text-slate-600 border border-slate-200 rounded-xl font-bold hover:bg-slate-50 disabled:opacity-50 transition-all"
                 >
                   {isSyncing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                  Load Data
+                  Load
                 </button>
               </div>
               
