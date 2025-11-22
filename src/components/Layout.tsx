@@ -1,5 +1,5 @@
 import React from 'react';
-import { Brain, BarChart3, List, BookOpen, Settings } from 'lucide-react';
+import { Brain, BarChart3, List, BookOpen, Settings, Library } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -42,9 +42,10 @@ export default function Layout({ children, currentView, onNavigate }: LayoutProp
 
         {/* Bottom Navigation */}
         <nav className="bg-white px-6 py-3 border-t border-slate-100 flex justify-between items-center pb-6 md:pb-3 shadow-[0_-10px_40px_-15px_rgba(0,0,0,0.05)]">
-          <NavButton id="dashboard" icon={BarChart3} label="Stats" />
-          <NavButton id="list" icon={List} label="Vocab" />
           <NavButton id="learn" icon={BookOpen} label="Learn" />
+          <NavButton id="library" icon={Library} label="Library" />
+          <NavButton id="list" icon={List} label="Vocab" />
+          <NavButton id="dashboard" icon={BarChart3} label="Stats" />
           <NavButton id="settings" icon={Settings} label="Settings" />
         </nav>
       </div>

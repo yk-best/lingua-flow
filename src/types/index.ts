@@ -1,8 +1,8 @@
 export interface SRSStats {
-  interval: number;    // Days until next review
-  repetition: number;  // Consecutive correct answers
-  efactor: number;     // Easiness Factor
-  dueDate: number;     // Timestamp for next review
+  interval: number;
+  repetition: number;
+  efactor: number;
+  dueDate: number;
 }
 
 export interface Definition {
@@ -26,4 +26,16 @@ export interface Word {
   examples: Example[];
   note: string;
   srs?: SRSStats;
+  packId?: string; // New field to track origin
+}
+
+// New Interface for Word Packs
+export interface WordPack {
+  id: string;
+  name: string;
+  description: string;
+  level: string;
+  totalWords: number;
+  sourceUrl: string; // Where to fetch the JSON from
+  isDownloaded?: boolean;
 }
