@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   RefreshCw, Check, X, Star, CheckCircle2, 
   Settings, Trophy, Flame, TrendingUp, Plus, ArrowLeft, Save, Cloud, Download, Upload, Loader2
@@ -28,6 +28,20 @@ const INITIAL_VOCAB: Word[] = [
     ],
     examples: [
       { en: "The local economy is remarkably resilient.", cn: "当地经济具有惊人的恢复力。" }
+    ],
+    note: ""
+  },
+  {
+    id: 2,
+    word: "Ambiguous",
+    phonetic: "/æmˈbɪɡjuəs/",
+    category: "Academic",
+    status: 'learning',
+    definitions: [
+      { pos: "adj.", en: "Open to more than one interpretation.", cn: "模棱两可的；含糊不清的" }
+    ],
+    examples: [
+      { en: "The instructions were too ambiguous to follow.", cn: "指示太含糊，无法照办。" }
     ],
     note: ""
   }
@@ -98,7 +112,6 @@ export default function App() {
       if (result.success && result.data) {
         setVocabList(result.data);
         setSyncStatus('Download Successful! Data updated.');
-        // Optional: Reload to ensure fresh state
         setTimeout(() => window.location.reload(), 1000);
       } else {
         setSyncStatus(`Download Failed: ${result.message}`);
@@ -312,6 +325,24 @@ export default function App() {
             <div className="flex gap-1 h-3 w-full rounded-full overflow-hidden bg-slate-100">
               {activeVocab.slice(0, 10).map((_, i) => (<div key={i} className="flex-1 bg-blue-400 opacity-80 first:rounded-l-full last:rounded-r-full" style={{ opacity: 1 - (i * 0.08) }}></div>))}
               {activeVocab.length > 10 && <div className="flex-1 bg-slate-200"></div>}
+            </div>
+          </div>
+          <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-6">
+            <h3 className="font-bold text-slate-700 mb-6 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-emerald-500" />
+              Weekly Activity
+            </h3>
+            <div className="flex justify-between items-end h-32">
+              {[40, 65, 30, 80, 20, 90, sessionStats.reviewed * 5].map((h, i) => (
+                <div key={i} className="flex flex-col items-center gap-2 flex-1 group">
+                  <div className="w-full flex justify-center items-end h-full relative">
+                     <div style={{ height: `${Math.min(h, 100)}%` }} className={`w-2.5 rounded-full transition-all duration-1000 ${i === 6 ? 'bg-indigo-500 shadow-lg shadow-indigo-200' : 'bg-slate-100 group-hover:bg-indigo-200'}`}></div>
+                  </div>
+                  <span className={`text-[10px] font-bold ${i === 6 ? 'text-indigo-600' : 'text-slate-300'}`}>
+                    {['M','T','W','T','F','S','S'][i]}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
