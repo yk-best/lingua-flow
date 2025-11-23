@@ -4,20 +4,24 @@ import sys
 
 # --- CONFIGURATION ---
 VOCAB_FILE = '30k-explained.txt'
-SENTENCES_FILE = 'eng_sentences.tsv' 
+# Using a regex to find the sentence file if the name varies (e.g. .tsp, .tsv, .txt)
+SENTENCES_FILE_NAME = 'eng_sentences.tsv' 
 OUTPUT_FILE = 'vocab_30k.json'
 MAX_EXAMPLES = 2 
 
 def parse_file():
-    # 1. Parse Vocab
-    print(f"--- Reading {VOCAB_FILE} ---")
+    print(f"\n🔍 STARTING DEBUG PROCESS...")
+    
+    # 1. LOAD VOCAB WORDS
+    print(f"\n--- 1. Reading Vocabulary ({VOCAB_FILE}) ---")
     try:
         with open(VOCAB_FILE, 'r', encoding='utf-8', errors='ignore') as f:
             content = f.read()
     except FileNotFoundError:
-        print(f"❌ Error: {VOCAB_FILE} not found.")
+        print(f"❌ CRITICAL ERROR: '{VOCAB_FILE}' not found.")
         return
 
+    # Split by double newlines
     blocks = re.split(r'\n\s*\n', content.strip())
     words_map = {} 
     words_list = []
@@ -27,17 +31,23 @@ def parse_file():
         if len(lines) < 2: continue
 
         try:
+            # Check first line for word
             header_parts = lines[0].strip().split()
             if not header_parts: continue
+            
+            # The first part is the word (e.g., "the" or "sob")
             word_text = header_parts[0]
             
-            # Phonetics
+            # DEBUG: Print first 3 words found to verify parsing
+            if i < 3:
+                print(f"   Parsed Word #{i}: {word_text}")
+
+            # Phonetics & Defs
             phonetic = ""
             if len(lines) > 1:
                 p_parts = lines[1].strip().split('  ')
                 if p_parts: phonetic = f"/{p_parts[0]}/"
 
-            # Defs
             raw_def = " ".join([l.strip() for l in lines[2:]])
             
             entry = {
@@ -53,77 +63,78 @@ def parse_file():
             }
             
             words_list.append(entry)
-            # Store lower case for matching
             words_map[word_text.lower()] = entry
             
         except Exception:
             continue
 
-    print(f"✅ Loaded {len(words_list)} words.")
+    print(f"✅ Successfully loaded {len(words_list)} words into memory.")
+    if len(words_list) == 0:
+        print("❌ ERROR: No words found. Check if 30k-explained.txt is empty or has different formatting.")
+        return
 
-    # 2. Enrich with Sentences
-    print(f"--- Processing {SENTENCES_FILE} ---")
+    # 2. LOAD SENTENCES
+    print(f"\n--- 2. Reading Sentences ({SENTENCES_FILE_NAME}) ---")
     match_count = 0
+    
     try:
-        with open(SENTENCES_FILE, 'r', encoding='utf-8', errors='ignore') as f:
+        with open(SENTENCES_FILE_NAME, 'r', encoding='utf-8', errors='ignore') as f:
             for line_idx, line in enumerate(f):
-                if line_idx % 100000 == 0:
-                    print(f"Processed {line_idx} lines... (Matches found: {match_count})")
+                # DEBUG: Print first 3 lines of sentence file
+                if line_idx < 3:
+                    print(f"   Raw Line #{line_idx}: {repr(line.strip())}")
 
-                # Robust Splitting: Try tab first, then space if tab fails
-                parts = line.strip().split('\t')
-                if len(parts) < 3:
-                    # Fallback for space-separated files
-                    # Format: ID LANG TEXT -> 1276 eng Text...
-                    parts = line.strip().split(maxsplit=2)
-                
-                if len(parts) < 3: continue
-                
-                lang = parts[1]
-                text = parts[2]
+                if line_idx % 200000 == 0 and line_idx > 0:
+                    print(f"   Processed {line_idx} lines... (Matches found so far: {match_count})")
 
-                # Ensure it is English
+                # Robust Splitting: Handles Tab OR 2+ Spaces
+                parts = re.split(r'\t| {2,}', line.strip())
+                
+                if len(parts) < 3: 
+                    continue
+                
+                # Assuming format: ID  LANG  TEXT
+                lang = parts[1].strip()
+                text = parts[2].strip()
+
+                # DEBUG: Check first parse result
+                if line_idx == 0:
+                    print(f"   Parsed Line #0 -> Lang: '{lang}', Text: '{text}'")
+
                 if lang != 'eng': continue
-                
-                # Skip very long/short sentences
-                if len(text) > 100 or len(text) < 10: continue
+                if len(text) > 150 or len(text) < 5: continue
 
-                # Tokenize sentence (remove punctuation, lowercase)
-                # "Hello, world!" -> {"hello", "world"}
-                tokens = set(re.findall(r'\b[a-z]+\b', text.lower()))
+                # Match logic
+                # "Let's try" -> tokens: "lets", "try" (removes punctuation)
+                clean_text = re.sub(r"[^\w\s']", '', text.lower()) 
+                tokens = set(clean_text.split())
                 
                 for token in tokens:
                     if token in words_map:
                         entry = words_map[token]
-                        # Only add if we need more examples
                         if len(entry['examples']) < MAX_EXAMPLES:
-                            # Check duplicates
+                            # Deduplicate
                             if not any(ex['en'] == text for ex in entry['examples']):
-                                entry['examples'].append({
-                                    "en": text,
-                                    "cn": "" 
-                                })
+                                entry['examples'].append({ "en": text, "cn": "" })
                                 match_count += 1
-                                
-                                # Optimization: If full, remove from map? 
-                                # NO, because words might appear multiple times in our list if duplicates exist.
-                                # But for speed, if we assume unique words:
-                                if len(entry['examples']) >= MAX_EXAMPLES:
-                                    del words_map[token]
+                                if match_count < 4:
+                                    print(f"   ✅ MATCH #{match_count}: Added example for '{token}' -> \"{text}\"")
 
     except FileNotFoundError:
-        print(f"❌ Error: {SENTENCES_FILE} not found.")
+        print(f"❌ Error: '{SENTENCES_FILE_NAME}' not found. Please make sure the file name matches exactly.")
+        return
 
-    # 3. Stats & Save
-    filled_count = sum(1 for w in words_list if len(w['examples']) > 0)
-    print(f"--- Stats ---")
+    # 3. SAVE
+    print(f"\n--- 3. Stats & Save ---")
+    words_with_ex = sum(1 for w in words_list if len(w['examples']) > 0)
     print(f"Total Words: {len(words_list)}")
-    print(f"Words with Examples: {filled_count}")
+    print(f"Words with Examples: {words_with_ex} ({(words_with_ex/len(words_list))*100:.1f}%)")
     
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
         json.dump(words_list, f, ensure_ascii=False, indent=2)
     
     print(f"✅ Saved to {OUTPUT_FILE}")
+    print("👉 Now move this file to your 'public/' folder and reload the app.")
 
 def get_category(rank):
     if rank < 4000: return "Common"

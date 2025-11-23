@@ -56,6 +56,20 @@ export async function fetchWordPack(packId: string): Promise<Word[]> {
 
 // ... keep generateMockWords function ...
 function generateMockWords(packId: string): Word[] {
-    // ... existing mock code ...
-    return [];
+  const count = 20; 
+  const category = packId === 'business-core' ? 'Business' : 'General';
+  
+  return Array.from({ length: count }).map((_, i) => ({
+    // Using packId in string ensures it is "read"
+    id: `${packId}_${i}`,
+    word: `Word-${packId}-${i + 1}`, 
+    phonetic: `/wɜːd ${i}/`,
+    category: category,
+    status: 'new', 
+    definitions: [{ pos: 'n.', en: `Definition for word ${i}`, cn: `单词 ${i} 的释义` }],
+    examples: [{ en: `Example sentence for word ${i}.`, cn: `例句 ${i}` }],
+    note: "",
+    packId: packId,
+    srs: getInitialStats()
+  }));
 }

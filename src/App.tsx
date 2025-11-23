@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   RefreshCw, Check, X, CheckCircle2, 
-  Settings, Trophy, Flame, TrendingUp, Plus, ArrowLeft, Cloud, Download, Upload, Loader2, Library, Volume2, ChevronRight, ChevronLeft, Filter, Search
+  Trophy, Flame, TrendingUp, Plus, ArrowLeft, Cloud, Download, Loader2, Library, ChevronRight, ChevronLeft, Search
 } from 'lucide-react';
 
 import Layout from './components/Layout';
@@ -125,16 +125,12 @@ export default function App() {
   const learningQueue = useMemo(() => {
     const now = Date.now();
     
-    // Base pool is defined by the current Level Filter (so you can just learn "Common" words)
-    // If filter is 'All', we default to learning broadly.
     const sourceList = filterLevel === 'All' ? vocabList : filteredVocabList;
 
-    // 1. Due Reviews (Highest Priority)
     const dueReviews = sourceList
       .filter(w => w.status === 'learning' && w.srs && w.srs.dueDate <= now)
       .sort((a, b) => (a.srs?.dueDate || 0) - (b.srs?.dueDate || 0));
     
-    // 2. New Words (Fill remainder of daily goal)
     const remaining = Math.max(0, dailyGoal - sessionStats.reviewed);
     const newWords = sourceList
       .filter(w => w.status === 'new')
@@ -236,9 +232,9 @@ export default function App() {
   const totalPages = Math.ceil(filteredVocabList.length / WORDS_PER_PAGE);
   const visibleList = filteredVocabList.slice(page * WORDS_PER_PAGE, (page + 1) * WORDS_PER_PAGE);
 
-  // Filter Bar Component
+  // Component
   const FilterBar = () => (
-    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-2 no-scrollbar">
+    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide mb-2">
       {LEVELS.map(level => (
         <button
           key={level}
@@ -323,7 +319,6 @@ export default function App() {
               </div>
             </div>
             
-            {/* SEARCH BAR */}
             <div className="relative">
               <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
               <input 
@@ -372,7 +367,6 @@ export default function App() {
         <div className="space-y-6 pb-24">
            <h2 className="text-2xl font-bold text-slate-800">Settings</h2>
            
-           {/* GOAL SETTING */}
            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
              <h3 className="font-bold text-slate-700 flex gap-2"><TrendingUp className="w-5 h-5"/> Daily Goal</h3>
              <div>
