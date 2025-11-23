@@ -1,18 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, ChevronRight, CheckCircle2, X, Edit3 } from 'lucide-react';
+import { Volume2, ChevronRight, CheckCircle2, X, Edit3, Plus } from 'lucide-react';
 import type { Word } from '../types';
 
 interface FlashcardProps {
   word: Word;
   onMarkKnown: () => void;
   onUpdateNote: (id: number | string, note: string) => void;
+  onUpdateExample?: (id: number | string, example: string) => void;
 }
 
-export default function Flashcard({ word, onMarkKnown, onUpdateNote }: FlashcardProps) {
+export default function Flashcard({ word, onMarkKnown, onUpdateNote, onUpdateExample }: FlashcardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
+  const [manualExample, setManualExample] = useState('');
+  const [isAddingExample, setIsAddingExample] = useState(false);
 
   useEffect(() => {
     setIsFlipped(false);
+    setIsAddingExample(false);
+    setManualExample('');
   }, [word.id]);
 
   const speakText = (text: string, e?: React.MouseEvent) => {
@@ -22,6 +27,18 @@ export default function Flashcard({ word, onMarkKnown, onUpdateNote }: Flashcard
     utterance.rate = 0.8;
     window.speechSynthesis.speak(utterance);
   };
+
+  const saveManualExample = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (manualExample.trim() && onUpdateExample) {
+      onUpdateExample(word.id, manualExample);
+      setIsAddingExample(false);
+      setManualExample('');
+    }
+  };
+
+  // Helper to safely get examples
+  const hasExamples = word.examples && Array.isArray(word.examples) && word.examples.length > 0;
 
   return (
     <div 
@@ -33,7 +50,6 @@ export default function Flashcard({ word, onMarkKnown, onUpdateNote }: Flashcard
         {/* --- FRONT SIDE --- */}
         <div className={`absolute inset-0 w-full h-full bg-white rounded-[2rem] shadow-xl shadow-indigo-200/40 p-8 flex flex-col items-center justify-center border border-white [backface-visibility:hidden] ${isFlipped ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
           
-          {/* Top Controls */}
           <div className="absolute top-6 w-full px-8 flex justify-between items-center">
             <span className="text-xs font-bold tracking-wider text-indigo-500 uppercase bg-indigo-50 px-3 py-1 rounded-full">
               {word.category}
@@ -104,19 +120,51 @@ export default function Flashcard({ word, onMarkKnown, onUpdateNote }: Flashcard
 
             {/* Examples */}
             <div>
-              <h4 className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">Examples</h4>
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Examples ({word.examples ? word.examples.length : 0})
+                </h4>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setIsAddingExample(!isAddingExample); }}
+                  className="text-xs text-indigo-500 font-bold flex items-center gap-1 hover:bg-indigo-50 px-2 py-1 rounded"
+                >
+                  <Plus className="w-3 h-3" /> Add
+                </button>
+              </div>
+
+              {isAddingExample && (
+                <div className="mb-4" onClick={e => e.stopPropagation()}>
+                  <input 
+                    autoFocus
+                    className="w-full p-2 border border-indigo-200 rounded-lg text-sm mb-2 focus:ring-2 focus:ring-indigo-500 outline-none"
+                    placeholder="Type your own example..."
+                    value={manualExample}
+                    onChange={e => setManualExample(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && saveManualExample(e)}
+                  />
+                  <button onClick={saveManualExample} className="w-full py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg">Save Example</button>
+                </div>
+              )}
+
               <div className="space-y-3">
-                {word.examples.map((ex, i) => (
-                  <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 hover:border-indigo-100 transition-colors">
-                    <div className="flex justify-between items-start gap-3 mb-2">
-                      <p className="text-slate-700 text-[15px] italic font-medium leading-relaxed">"{ex.en}"</p>
-                      <button onClick={(e) => speakText(ex.en, e)} className="shrink-0 mt-0.5 text-slate-300 hover:text-indigo-500">
-                        <Volume2 className="w-4 h-4" />
-                      </button>
+                {hasExamples ? (
+                  word.examples.map((ex, i) => (
+                    <div key={i} className="bg-slate-50 p-4 rounded-2xl border border-slate-100 hover:border-indigo-100 transition-colors">
+                      <div className="flex justify-between items-start gap-3 mb-2">
+                        <p className="text-slate-700 text-[15px] italic font-medium leading-relaxed">"{ex.en}"</p>
+                        <button onClick={(e) => speakText(ex.en, e)} className="shrink-0 mt-0.5 text-slate-300 hover:text-indigo-500">
+                          <Volume2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {/* Only show translation if it exists and is not empty string */}
+                      {ex.cn && ex.cn.trim() !== "" && <p className="text-xs text-slate-500 font-medium">{ex.cn}</p>}
                     </div>
-                    <p className="text-xs text-slate-500 font-medium">{ex.cn}</p>
+                  ))
+                ) : (
+                  <div className="p-4 bg-slate-50 rounded-2xl text-sm text-slate-400 italic text-center">
+                    No examples available.
                   </div>
-                ))}
+                )}
               </div>
             </div>
 
